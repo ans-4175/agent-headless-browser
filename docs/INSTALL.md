@@ -1,5 +1,22 @@
 # Installation and operation
 
+## Release setup
+
+Pick a release tag and adapter without relying on an extracted directory name:
+
+```bash
+VERSION=v0.1.6
+ADAPTER=hermes # or pi
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
+  | tar -xz -C "$work" --strip-components=1
+chmod +x "$work/install.sh"
+"$work/install.sh" --adapter "$ADAPTER" --smoke-test
+```
+
+The GitHub Release runtime artifacts are checksummed payloads for controlled distribution. For normal setup, use this source installer so the wrapper, adapter, policy, and platform-native build remain aligned.
+
 ## What this package installs
 
 The installer builds a native runtime for the current host and writes only to user-owned paths by default:

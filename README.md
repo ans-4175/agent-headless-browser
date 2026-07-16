@@ -1,37 +1,83 @@
 # agent-headless-browser
 
-Portable source package for a governed gstack-browse runtime on Linux x64 and macOS Apple Silicon.
+A governed, isolated headless Chromium runtime for **Hermes** and **Pi**. It supports Linux x64 and macOS Apple Silicon, uses a fresh profile, and exposes only an approved browser-command surface.
 
-## Test on a host without Git
+It blocks cookie/profile import, arbitrary JavaScript, custom headers, uploads, CDP, tunnels, and headed mode. Browser interactions that can cause external effects remain subject to the installed skill's approval rules.
 
-```bash
-unzip agent-headless-browser-0.1.0-source.zip
-cd agent-headless-browser-0.1.0
-./install.sh --adapter hermes --smoke-test
-```
+## Install from the latest release
 
-The installer builds a native runtime from the vendored, pinned source archive. It does not contain a prebuilt runtime, Chromium, host path, hostname, credential, folder ID, or data URL.
+The release source archive is the recommended setup path. It has the installer, policy, adapters, and pinned gstack source; it builds the native runtime on the target host.
 
-If Linux sandbox preflight/browser launch fails, review the risk and rerun explicitly:
+### Hermes
 
 ```bash
-./install.sh --adapter hermes --allow-no-sandbox --smoke-test
+VERSION=v0.1.6 # replace with the release tag you want
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
+  | tar -xz -C "$work" --strip-components=1
+chmod +x "$work/install.sh"
+"$work/install.sh" --adapter hermes --smoke-test
 ```
 
-`--allow-no-sandbox` is never the default. Do not use that mode for authenticated, sensitive, payment, or untrusted sites.
-
-## Pi
+### Pi
 
 ```bash
-./install.sh --adapter pi --smoke-test
+VERSION=v0.1.6 # replace with the release tag you want
+work=$(mktemp -d)
+trap 'rm -rf "$work"' EXIT
+curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
+  | tar -xz -C "$work" --strip-components=1
+chmod +x "$work/install.sh"
+"$work/install.sh" --adapter pi --smoke-test
 ```
 
-Start a new Pi session, then use `/skill:agent-headless-browser`.
+Start a fresh Pi session, then invoke:
 
-## Provenance
+```text
+/skill:agent-headless-browser
+```
 
-- gstack source: `1.58.4.0`, commit `9fd03fae9e74f5daa7a138366aca8f86c7367c5c`
-- browser engine: Playwright `1.61.1`
-- build tool: Bun `1.2.10`
+Use a specific newer tag in the URL when upgrading. Git checkout is optional; installation does not depend on a particular extracted folder name.
 
-See `docs/INSTALL.md` for prerequisites, install paths, Hermes/Pi usage, validation, and removal. See `docs/SECURITY.md`, `AGENTS.md`, and `THIRD_PARTY_NOTICES.md` before deployment. GitHub Actions builds platform-specific runtime bundles through `.github/workflows/build-runtime.yml`.
+## What is installed
+
+```text
+~/.local/share/agent-headless-browser/   runtime + SHA256SUMS
+~/.agent-headless-browser/               isolated profile and daemon state
+~/.local/bin/agent-headless-browser      approved command entry point
+```
+
+The selected adapter is added to `~/.hermes/skills/agent-headless-browser/` or `~/.agents/skills/agent-headless-browser/`.
+
+## Verify and use
+
+```bash
+agent-headless-browser status
+agent-headless-browser goto https://example.com
+agent-headless-browser snapshot -i
+agent-headless-browser screenshot /tmp/page.png
+agent-headless-browser stop
+```
+
+The smoke test uses only `example.com`; it does not authenticate or submit data.
+
+## Linux sandbox
+
+Sandboxing is required by default. If a Linux host blocks Chromium user namespaces/AppArmor, investigate first. Only with deliberate approval may you use:
+
+```bash
+"$work/install.sh" --adapter hermes --allow-no-sandbox --smoke-test
+```
+
+Never use the no-sandbox fallback for logins, secrets, payments, or untrusted sites.
+
+## Releases and provenance
+
+Each GitHub Release provides a universal source archive plus checksummed Linux/macOS runtime bundles. The source installer is the supported setup path; runtime bundles are intended for controlled distribution or CI integration.
+
+- gstack source: `1.58.4.0` at `9fd03fae9e74f5daa7a138366aca8f86c7367c5c`
+- Playwright: `1.61.1`
+- Bun build tool: `1.2.10`
+
+Read [installation details](docs/INSTALL.md), [security boundaries](docs/SECURITY.md), [agent guidance](AGENTS.md), and [third-party notices](THIRD_PARTY_NOTICES.md) before deployment.
