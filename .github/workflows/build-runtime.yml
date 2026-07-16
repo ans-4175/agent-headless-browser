@@ -28,16 +28,21 @@ jobs:
         run: |
           set -euxo pipefail
           chmod +x install.sh scripts/*.sh scripts/*.py
-          options=()
+          run_install() {
+            ./install.sh --adapter none --install-root "$RUNNER_TEMP/agent-headless-browser" --bin-dir "$RUNNER_TEMP/bin" "$@"
+          }
           # GitHub-hosted Linux runners are ephemeral and have no credentials.
           # This explicit CI-only fallback avoids a host sandbox limitation.
-          [[ "$RUNNER_OS" == Linux ]] && options+=(--allow-no-sandbox)
-          output=$(./install.sh --adapter none --install-root "$RUNNER_TEMP/agent-headless-browser" --bin-dir "$RUNNER_TEMP/bin" "${options[@]}" 2>&1) || {
-            code=$?
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            if output=$(run_install --allow-no-sandbox 2>&1); then code=0; else code=$?; fi
+          else
+            if output=$(run_install 2>&1); then code=0; else code=$?; fi
+          fi
+          if [[ "$code" -ne 0 ]]; then
             output=${output//$'\n'/ -- }
             echo "::error title=Native runtime build failed::${output:0:1500}"
             exit "$code"
-          }
+          fi
           echo "$output"
       - name: Validate navigation
         run: |
