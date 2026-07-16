@@ -4,6 +4,24 @@ A governed, isolated headless Chromium runtime for **Hermes** and **Pi**. It sup
 
 It blocks cookie/profile import, arbitrary JavaScript, custom headers, uploads, CDP, tunnels, and headed mode. Browser interactions that can cause external effects remain subject to the installed skill's approval rules.
 
+## Why this repository exists
+
+Most browser automation tools optimize for capability: arbitrary scripts, existing browser sessions, custom network state, and unrestricted page control. Those are useful defaults for application test suites, but they are risky defaults when an AI agent is browsing on a user's behalf.
+
+This project is an **agent integration layer**, not a replacement for Playwright or a general browser-automation framework. It makes a small, reviewable operational boundary around a proven browser engine:
+
+| Concern | Playwright / raw browser automation | agent-headless-browser |
+| --- | --- | --- |
+| Primary job | Build application tests and unrestricted automation | Let Hermes/Pi perform bounded browsing and QA safely |
+| Browser state | Caller controls profiles, cookies, storage, headers | Fresh isolated profile; import and custom state are blocked |
+| Control surface | Full API, arbitrary JavaScript, CDP, uploads | Allowlisted CLI commands only |
+| External effects | Managed by each caller | Skill requires explicit approval before form-like interactions |
+| Runtime setup | Application-owned dependencies | Pinned native build, checksums, adapters, and smoke tests |
+
+The runtime is built from the pinned source of [gstack browse](https://github.com/garrytan/gstack), which provides the browser command/server implementation. We keep that implementation as an engine dependency rather than copying its raw agent instructions. This repository adds the parts needed for a portable, governed deployment: source provenance, isolated state, a restrictive wrapper, Hermes/Pi adapters, explicit Linux sandbox fallback, checksums, and reproducible Linux/macOS CI artifacts.
+
+Use Playwright directly when you own the test code and need its full API. Use this package when an agent needs navigation, snapshots, screenshots, or deliberate UI QA without inheriting a personal browser session or an unrestricted automation surface.
+
 ## Install from the latest release
 
 The release source archive is the recommended setup path. It has the installer, policy, adapters, and pinned gstack source; it builds the native runtime on the target host.
