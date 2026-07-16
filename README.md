@@ -1,6 +1,6 @@
 # agent-headless-browser
 
-Portable source package for a governed gstack-browse runtime on Linux x64, macOS Apple Silicon, and macOS Intel.
+Portable source package for a governed gstack-browse runtime on Linux x64 and macOS Apple Silicon.
 
 ## Test on a host without Git
 

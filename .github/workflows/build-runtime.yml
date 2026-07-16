@@ -18,11 +18,9 @@ jobs:
             label: linux-x64
           - runner: macos-14
             label: darwin-arm64
-          - runner: macos-13
-            label: darwin-x64
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build native runtime
         shell: bash
         run: |
@@ -96,7 +94,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
         with:
           path: dist

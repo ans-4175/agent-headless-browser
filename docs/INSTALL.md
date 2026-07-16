@@ -16,7 +16,7 @@ It does not alter system packages, browser profiles, permissions, IAM, network p
 
 ## Prerequisites
 
-- Linux x64, macOS Apple Silicon, or macOS Intel
+- Linux x64 or macOS Apple Silicon
 - `curl`, `tar`, `python3`, `node`, and either `sha256sum` or macOS `shasum`
 - outbound HTTPS access to Bun, npm, and Playwright artifact hosts
 - free disk space for Chromium (roughly 1 GB during build)

@@ -5,7 +5,7 @@ VERSION=0.1.0 GSTACK_COMMIT=9fd03fae9e74f5daa7a138366aca8f86c7367c5c BUN_VERSION
 ROOT="$HOME/.local/share/agent-headless-browser" STATE="$HOME/.agent-headless-browser" BIN="$HOME/.local/bin" ADAPTER=none NO_SANDBOX=0 SMOKE=0
 while (($#)); do case "$1" in
   --adapter) ADAPTER="$2"; shift 2;; --install-root) ROOT="$2"; shift 2;; --state-root) STATE="$2"; shift 2;; --bin-dir) BIN="$2"; shift 2;; --allow-no-sandbox) NO_SANDBOX=1; shift;; --smoke-test) SMOKE=1; shift;; --help) echo 'Usage: ./install.sh [--adapter hermes|pi|none] [--allow-no-sandbox] [--smoke-test]'; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac; done
-case "$(uname -s):$(uname -m)" in Linux:x86_64) bun_asset=bun-linux-x64.zip;; Darwin:arm64) bun_asset=bun-darwin-aarch64.zip;; Darwin:x86_64) bun_asset=bun-darwin-x64.zip;; *) echo "Unsupported platform: $(uname -s) $(uname -m)" >&2; exit 2;; esac
+case "$(uname -s):$(uname -m)" in Linux:x86_64) bun_asset=bun-linux-x64.zip;; Darwin:arm64) bun_asset=bun-darwin-aarch64.zip;; *) echo "Unsupported platform: $(uname -s) $(uname -m); supported: Linux x64 and macOS Apple Silicon." >&2; exit 2;; esac
 for c in curl tar python3 node; do command -v "$c" >/dev/null || { echo "Missing dependency: $c" >&2; exit 2; }; done
 if command -v sha256sum >/dev/null; then SHA256_BIN=sha256sum; SHA256_ARGS=();
 elif command -v shasum >/dev/null; then SHA256_BIN=shasum; SHA256_ARGS=(-a 256);
