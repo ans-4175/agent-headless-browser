@@ -47,14 +47,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          output=$("$RUNNER_TEMP/bin/agent-headless-browser" screenshot "$RUNNER_TEMP/smoke.png" 2>&1) || {
+          screenshot_path=/tmp/agent-headless-browser-smoke.png
+          output=$("$RUNNER_TEMP/bin/agent-headless-browser" screenshot "$screenshot_path" 2>&1) || {
             code=$?
             output=${output//$'\n'/ -- }
             echo "::error title=Screenshot validation failed::${output:0:1500}"
             exit "$code"
           }
           echo "$output"
-          test -s "$RUNNER_TEMP/smoke.png"
+          test -s "$screenshot_path"
+          rm -f "$screenshot_path"
       - name: Validate runtime checksum and stop
         if: always()
         run: |
