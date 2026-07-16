@@ -1,0 +1,11 @@
+{
+  "name": "agent-headless-browser",
+  "version": "0.1.0",
+  "source": {
+    "gstack_version": "1.58.4.0",
+    "gstack_commit": "9fd03fae9e74f5daa7a138366aca8f86c7367c5c",
+    "archive_sha256": "6edd7d604ac335c43e3d729b3569d5c30645e04fc9209683c6319f9f718c64a0"
+  },
+  "build": {"bun": "1.2.10", "playwright": "1.61.1"},
+  "platforms": ["linux-x64", "darwin-arm64", "darwin-x64"]
+}
