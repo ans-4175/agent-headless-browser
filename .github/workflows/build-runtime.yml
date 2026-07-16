@@ -24,24 +24,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build native runtime
+        shell: bash
         run: |
+          set -euxo pipefail
           chmod +x install.sh scripts/*.sh scripts/*.py
-          ./install.sh --adapter none --install-root "$RUNNER_TEMP/agent-headless-browser" --bin-dir "$RUNNER_TEMP/bin"
-      - name: Validate runtime
+          options=()
+          # GitHub-hosted Linux runners are ephemeral and have no credentials.
+          # This explicit CI-only fallback avoids a host sandbox limitation.
+          [[ "$RUNNER_OS" == Linux ]] && options+=(--allow-no-sandbox)
+          ./install.sh --adapter none --install-root "$RUNNER_TEMP/agent-headless-browser" --bin-dir "$RUNNER_TEMP/bin" "${options[@]}"
+      - name: Validate navigation
         run: |
+          set -euxo pipefail
+          "$RUNNER_TEMP/bin/agent-headless-browser" start
           "$RUNNER_TEMP/bin/agent-headless-browser" goto https://example.com
+          "$RUNNER_TEMP/bin/agent-headless-browser" status
+      - name: Validate accessibility snapshot
+        run: |
+          set -euxo pipefail
           "$RUNNER_TEMP/bin/agent-headless-browser" snapshot -i
+      - name: Validate screenshot
+        run: |
+          set -euxo pipefail
           "$RUNNER_TEMP/bin/agent-headless-browser" screenshot "$RUNNER_TEMP/smoke.png"
           test -s "$RUNNER_TEMP/smoke.png"
-          "$RUNNER_TEMP/bin/agent-headless-browser" stop
+      - name: Validate runtime checksum and stop
+        if: always()
+        run: |
+          set -euxo pipefail
+          "$RUNNER_TEMP/bin/agent-headless-browser" stop || true
           (cd "$RUNNER_TEMP/agent-headless-browser" && (sha256sum -c SHA256SUMS || shasum -a 256 -c SHA256SUMS))
       - name: Bundle runtime with notices
+        if: success()
         run: |
           mkdir release
           cp LICENSE THIRD_PARTY_NOTICES.md release/
           tar -C "$RUNNER_TEMP" -czf "release/agent-headless-browser-${{ matrix.label }}.tar.gz" agent-headless-browser
           shasum -a 256 release/*.tar.gz > release/SHA256SUMS
       - uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: agent-headless-browser-${{ matrix.label }}
           path: release/
