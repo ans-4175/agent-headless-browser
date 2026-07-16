@@ -4,23 +4,70 @@ A governed, isolated headless Chromium runtime for **Hermes** and **Pi**. It sup
 
 It blocks cookie/profile import, arbitrary JavaScript, custom headers, uploads, CDP, tunnels, and headed mode. Browser interactions that can cause external effects remain subject to the installed skill's approval rules.
 
-## Why this repository exists
+## Why this exists
 
-Most browser automation tools optimize for capability: arbitrary scripts, existing browser sessions, custom network state, and unrestricted page control. Those are useful defaults for application test suites, but they are risky defaults when an AI agent is browsing on a user's behalf.
+Playwright is great. It gives you the whole workshop: browser contexts, headers, scripts, uploads, CDP, and enough rope to automate a serious test suite. That is exactly what a developer wants when they own the code.
 
-This project is an **agent integration layer**, not a replacement for Playwright or a general browser-automation framework. It makes a small, reviewable operational boundary around a proven browser engine:
+An agent checking a page on your behalf needs a smaller toolkit. Giving it your everyday Chrome profile plus a full automation API is the browser equivalent of handing a visitor the office master key because they asked to check the lights.
 
-| Concern | Playwright / raw browser automation | agent-headless-browser |
-| --- | --- | --- |
-| Primary job | Build application tests and unrestricted automation | Let Hermes/Pi perform bounded browsing and QA safely |
-| Browser state | Caller controls profiles, cookies, storage, headers | Fresh isolated profile; import and custom state are blocked |
-| Control surface | Full API, arbitrary JavaScript, CDP, uploads | Allowlisted CLI commands only |
-| External effects | Managed by each caller | Skill requires explicit approval before form-like interactions |
-| Runtime setup | Application-owned dependencies | Pinned native build, checksums, adapters, and smoke tests |
+This package keeps the useful bits—open a URL, inspect a page, take a screenshot, verify a deployment—then puts rails around them.
 
-The runtime is built from the pinned source of [gstack browse](https://github.com/garrytan/gstack), which provides the browser command/server implementation. We keep that implementation as an engine dependency rather than copying its raw agent instructions. This repository adds the parts needed for a portable, governed deployment: source provenance, isolated state, a restrictive wrapper, Hermes/Pi adapters, explicit Linux sandbox fallback, checksums, and reproducible Linux/macOS CI artifacts.
+A human can say: “Check whether the staging landing page loads on mobile and send me a screenshot.” The agent gets an isolated browser, a short command list, and a clean way to stop when it is done. It does not get your saved sessions, your cookies, or a quiet path to start clicking around.
 
-Use Playwright directly when you own the test code and need its full API. Use this package when an agent needs navigation, snapshots, screenshots, or deliberate UI QA without inheriting a personal browser session or an unrestricted automation surface.
+An agent can do this comfortably:
+
+```bash
+agent-headless-browser goto https://example.com
+agent-headless-browser snapshot -i
+agent-headless-browser screenshot /tmp/page.png
+agent-headless-browser stop
+```
+
+If it needs to click a button, fill a field, or press a key, the installed skill makes it ask first. That little pause is the point. Most browser automation is built to remove friction; agent browsing needs friction in exactly the places where a stray click can matter.
+
+Under the hood, the browser command/server comes from pinned [gstack browse](https://github.com/garrytan/gstack) source. We chose it because it already provides a practical CLI and daemon model. We did not copy its raw agent skill and call it a day. This repository adds the boring-but-important deployment layer: isolated state, an allowlisted wrapper, Hermes/Pi adapters, pinned provenance, checksums, native builds, CI smoke tests, and an explicit Linux no-sandbox escape hatch when a host truly needs it.
+
+Use Playwright directly when you are writing and owning a test suite. Use this when a human or agent needs safe, repeatable browser QA without turning a normal browsing task into a full-access automation project.
+
+## What using it feels like
+
+### “Did the deployment actually look right?”
+
+```bash
+agent-headless-browser goto https://staging.example.com
+agent-headless-browser snapshot -i
+agent-headless-browser screenshot /tmp/staging-home.png
+agent-headless-browser stop
+```
+
+You get a semantic page snapshot for quick inspection and a PNG you can open or attach to a bug. No existing Chrome window gets touched.
+
+### “Can the agent find the thing I mean?”
+
+Ask Hermes or Pi:
+
+```text
+Open https://example.com. Tell me the visible links and buttons. Do not click anything.
+```
+
+The agent can navigate and inspect. The `-i` snapshot gives it stable references such as `@e4`, rather than making it guess where a button lives on the page.
+
+### “Click this one thing—then stop.”
+
+After you have explicitly named the target and outcome:
+
+```bash
+agent-headless-browser snapshot -i
+# Confirm @e4 is the intended "Learn more" link.
+agent-headless-browser click @e4
+agent-headless-browser stop
+```
+
+The skill treats that click as an external effect. An agent should ask before it does this unless your instruction already gave that exact approval. It cannot quietly switch to arbitrary page JavaScript when a click is inconvenient.
+
+### “I need a full login flow.”
+
+That is usually a Playwright test-suite job, not a job for this wrapper. Keep credentials and long-lived session automation inside code you own and review. This package is deliberately less magical—and much less surprising.
 
 ## Install from the latest release
 
