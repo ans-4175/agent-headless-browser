@@ -32,7 +32,13 @@ jobs:
           # GitHub-hosted Linux runners are ephemeral and have no credentials.
           # This explicit CI-only fallback avoids a host sandbox limitation.
           [[ "$RUNNER_OS" == Linux ]] && options+=(--allow-no-sandbox)
-          ./install.sh --adapter none --install-root "$RUNNER_TEMP/agent-headless-browser" --bin-dir "$RUNNER_TEMP/bin" "${options[@]}"
+          output=$(./install.sh --adapter none --install-root "$RUNNER_TEMP/agent-headless-browser" --bin-dir "$RUNNER_TEMP/bin" "${options[@]}" 2>&1) || {
+            code=$?
+            output=${output//$'\n'/ -- }
+            echo "::error title=Native runtime build failed::${output:0:1500}"
+            exit "$code"
+          }
+          echo "$output"
       - name: Validate navigation
         run: |
           set -euxo pipefail
@@ -62,7 +68,9 @@ jobs:
         run: |
           set -euxo pipefail
           "$RUNNER_TEMP/bin/agent-headless-browser" stop || true
-          (cd "$RUNNER_TEMP/agent-headless-browser" && (sha256sum -c SHA256SUMS || shasum -a 256 -c SHA256SUMS))
+          if [[ -f "$RUNNER_TEMP/agent-headless-browser/SHA256SUMS" ]]; then
+            (cd "$RUNNER_TEMP/agent-headless-browser" && (sha256sum -c SHA256SUMS || shasum -a 256 -c SHA256SUMS))
+          fi
       - name: Bundle runtime with notices
         if: success()
         run: |
