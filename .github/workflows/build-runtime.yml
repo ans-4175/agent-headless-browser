@@ -81,7 +81,7 @@ jobs:
           cp LICENSE THIRD_PARTY_NOTICES.md release/
           tar -C "$RUNNER_TEMP" -czf "release/agent-headless-browser-${{ matrix.label }}.tar.gz" agent-headless-browser
           shasum -a 256 release/*.tar.gz > release/SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: success()
         with:
           name: agent-headless-browser-${{ matrix.label }}
@@ -95,7 +95,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           path: dist
       - name: Create source package
