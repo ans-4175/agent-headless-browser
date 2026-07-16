@@ -44,9 +44,16 @@ jobs:
           set -euxo pipefail
           "$RUNNER_TEMP/bin/agent-headless-browser" snapshot -i
       - name: Validate screenshot
+        shell: bash
         run: |
-          set -euxo pipefail
-          "$RUNNER_TEMP/bin/agent-headless-browser" screenshot "$RUNNER_TEMP/smoke.png"
+          set -euo pipefail
+          output=$("$RUNNER_TEMP/bin/agent-headless-browser" screenshot "$RUNNER_TEMP/smoke.png" 2>&1) || {
+            code=$?
+            output=${output//$'\n'/ -- }
+            echo "::error title=Screenshot validation failed::${output:0:1500}"
+            exit "$code"
+          }
+          echo "$output"
           test -s "$RUNNER_TEMP/smoke.png"
       - name: Validate runtime checksum and stop
         if: always()
