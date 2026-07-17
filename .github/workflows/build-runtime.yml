@@ -80,7 +80,7 @@ jobs:
           mkdir release
           cp LICENSE THIRD_PARTY_NOTICES.md release/
           tar -C "$RUNNER_TEMP" -czf "release/agent-headless-browser-${{ matrix.label }}.tar.gz" agent-headless-browser
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         if: success()
         with:
           name: agent-headless-browser-${{ matrix.label }}
@@ -94,7 +94,7 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v7
         with:
           path: dist
       - name: Stage release assets
