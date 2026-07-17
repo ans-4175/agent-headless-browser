@@ -76,7 +76,7 @@ The release source archive is the recommended setup path. It has the installer, 
 ### Hermes
 
 ```bash
-VERSION=v0.1.6 # replace with the release tag you want
+VERSION=v0.1.7 # replace with the release tag you want
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
@@ -88,7 +88,7 @@ chmod +x "$work/install.sh"
 ### Pi
 
 ```bash
-VERSION=v0.1.6 # replace with the release tag you want
+VERSION=v0.1.7 # replace with the release tag you want
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
