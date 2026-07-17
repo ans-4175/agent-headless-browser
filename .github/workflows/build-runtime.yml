@@ -80,7 +80,6 @@ jobs:
           mkdir release
           cp LICENSE THIRD_PARTY_NOTICES.md release/
           tar -C "$RUNNER_TEMP" -czf "release/agent-headless-browser-${{ matrix.label }}.tar.gz" agent-headless-browser
-          shasum -a 256 release/*.tar.gz > release/SHA256SUMS
       - uses: actions/upload-artifact@v5
         if: success()
         with:
@@ -98,14 +97,21 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           path: dist
-      - name: Create source package
+      - name: Stage release assets
         run: |
-          mkdir -p dist/source
-          git archive --format=zip --prefix="agent-headless-browser-${GITHUB_REF_NAME#v}/" HEAD > "dist/source/agent-headless-browser-${GITHUB_REF_NAME#v}-source.zip"
-          shasum -a 256 dist/source/*.zip > dist/source/SHA256SUMS
+          set -euo pipefail
+          mkdir -p stage
+          git archive --format=zip --prefix="agent-headless-browser-${GITHUB_REF_NAME#v}/" HEAD \
+            > "stage/agent-headless-browser-${GITHUB_REF_NAME#v}-source.zip"
+          find dist -type f \( -name '*.tar.gz' -o -name 'LICENSE' -o -name 'THIRD_PARTY_NOTICES.md' \) \
+            -exec cp -f {} stage/ \;
+      - name: Generate consolidated checksums
+        run: |
+          set -euo pipefail
+          (cd stage && shasum -a 256 *.tar.gz *-source.zip > SHA256SUMS)
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
-          find dist -type f -exec gh release upload "$GITHUB_REF_NAME" {} --clobber \;
+          find stage -type f -exec gh release upload "$GITHUB_REF_NAME" {} --clobber \;

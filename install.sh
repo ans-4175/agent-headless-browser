@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 PKG="$(cd "$(dirname "$0")" && pwd -P)"
-VERSION=0.1.0 GSTACK_COMMIT=9fd03fae9e74f5daa7a138366aca8f86c7367c5c BUN_VERSION=1.2.10
+VERSION=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["version"])' "$PKG/PACKAGE_MANIFEST.json" 2>/dev/null || echo 0.1.0) GSTACK_COMMIT=9fd03fae9e74f5daa7a138366aca8f86c7367c5c BUN_VERSION=1.2.10
 ROOT="$HOME/.local/share/agent-headless-browser" STATE="$HOME/.agent-headless-browser" BIN="$HOME/.local/bin" ADAPTER=none NO_SANDBOX=0 SMOKE=0
 while (($#)); do case "$1" in
   --adapter) ADAPTER="$2"; shift 2;; --install-root) ROOT="$2"; shift 2;; --state-root) STATE="$2"; shift 2;; --bin-dir) BIN="$2"; shift 2;; --allow-no-sandbox) NO_SANDBOX=1; shift;; --smoke-test) SMOKE=1; shift;; --help) echo 'Usage: ./install.sh [--adapter hermes|pi|none] [--allow-no-sandbox] [--smoke-test]'; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac; done
