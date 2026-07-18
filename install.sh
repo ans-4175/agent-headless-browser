@@ -7,12 +7,19 @@ while (($#)); do case "$1" in
   --adapter) ADAPTER="$2"; shift 2;; --install-root) ROOT="$2"; shift 2;; --state-root) STATE="$2"; shift 2;; --bin-dir) BIN="$2"; shift 2;; --allow-no-sandbox) NO_SANDBOX=1; shift;; --smoke-test) SMOKE=1; shift;; --help) echo 'Usage: ./install.sh [--adapter hermes|pi|none] [--allow-no-sandbox] [--smoke-test]'; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac; done
 case "$(uname -s):$(uname -m)" in Linux:x86_64) bun_asset=bun-linux-x64.zip;; Darwin:arm64) bun_asset=bun-darwin-aarch64.zip;; *) echo "Unsupported platform: $(uname -s) $(uname -m); supported: Linux x64 and macOS Apple Silicon." >&2; exit 2;; esac
 for c in curl tar python3 node; do command -v "$c" >/dev/null || { echo "Missing dependency: $c" >&2; exit 2; }; done
-if command -v sha256sum >/dev/null; then SHA256_BIN=sha256sum; SHA256_ARGS=();
-elif command -v shasum >/dev/null; then SHA256_BIN=shasum; SHA256_ARGS=(-a 256);
-else echo "Missing dependency: sha256sum or shasum" >&2; exit 2; fi
+if command -v sha256sum >/dev/null; then
+  sha256_check() { sha256sum -c -; }
+  sha256_manifest() { xargs -0 sha256sum; }
+elif command -v shasum >/dev/null; then
+  sha256_check() { shasum -a 256 -c -; }
+  sha256_manifest() { xargs -0 shasum -a 256; }
+else
+  echo "Missing dependency: sha256sum or shasum" >&2
+  exit 2
+fi
 stage=$(mktemp -d); trap 'rm -rf "$stage"' EXIT
 expected=6edd7d604ac335c43e3d729b3569d5c30645e04fc9209683c6319f9f718c64a0
-printf '%s  %s\n' "$expected" "$PKG/vendor/gstack-browse-source.tar.gz" | "$SHA256_BIN" "${SHA256_ARGS[@]}" -c -
+printf '%s  %s\n' "$expected" "$PKG/vendor/gstack-browse-source.tar.gz" | sha256_check
 mkdir -p "$stage/bun" "$stage/src" "$stage/runtime"
 curl -fsSL --retry 3 --proto '=https' --tlsv1.2 -o "$stage/bun.zip" "https://github.com/oven-sh/bun/releases/download/bun-v$BUN_VERSION/$bun_asset"
 python3 - "$stage/bun.zip" "$stage/bun" <<'PY'
@@ -53,7 +60,7 @@ exec "$ROOT/scripts/browser-wrapper.sh" "\$@"
 EOF
 chmod 755 "$BIN/agent-headless-browser"; ((NO_SANDBOX)) && touch "$ROOT/NO_SANDBOX_APPROVED"
 printf 'package_version=%s\ngstack_commit=%s\nbun=%s\nplaywright=1.61.1\n' "$VERSION" "$GSTACK_COMMIT" "$BUN_VERSION" > "$ROOT/VERSION"
-(cd "$ROOT" && find . -type f -not -name SHA256SUMS -print0 | sort -z | xargs -0 "$SHA256_BIN" "${SHA256_ARGS[@]}" > SHA256SUMS)
+(cd "$ROOT" && find . -type f -not -name SHA256SUMS -print0 | sort -z | sha256_manifest > SHA256SUMS)
 case "$ADAPTER" in hermes) install -d "$HOME/.hermes/skills/agent-headless-browser"; sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/hermes/SKILL.md" > "$HOME/.hermes/skills/agent-headless-browser/SKILL.md";; pi) install -d "$HOME/.agents/skills/agent-headless-browser"; sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/pi/SKILL.md" > "$HOME/.agents/skills/agent-headless-browser/SKILL.md";; none) ;; *) echo 'adapter must be hermes, pi, or none' >&2; exit 2;; esac
 if ((SMOKE)); then "$BIN/agent-headless-browser" goto https://example.com >/dev/null; "$BIN/agent-headless-browser" snapshot -i >/dev/null; "$BIN/agent-headless-browser" stop; fi
 echo "Installed: $BIN/agent-headless-browser"
