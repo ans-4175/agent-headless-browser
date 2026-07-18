@@ -6,7 +6,7 @@ This repository is a source package. Do not bypass `install.sh` or invoke the bu
 
 1. Read `README.md`, `docs/INSTALL.md`, and `docs/SECURITY.md`.
 2. Verify the ZIP SHA-256 supplied by the owner.
-3. Run `./install.sh --adapter hermes --smoke-test` or `--adapter pi`.
+3. Run `./install.sh --adapter hermes --smoke-test`, `--adapter pi`, `--adapter claude`, `--adapter codex`, or `--adapter other`.
 4. Do not add `--allow-no-sandbox` unless the owner explicitly approves it after sandbox failure.
 5. Verify `SHA256SUMS` under the installed runtime and ensure the daemon is stopped after testing.
 

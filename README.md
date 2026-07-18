@@ -2,7 +2,7 @@
 
 **Browser QA for agents, without handing them the keys to your browser.**
 
-`agent-headless-browser` gives Hermes and Pi a small, governed slice of Chromium: open a public page, inspect it, take a screenshot, check a deployment. The browser gets a fresh profile; the agent gets an allowlisted command surface; your everyday Chrome stays out of it.
+`agent-headless-browser` gives Hermes, Pi, Claude Code, Codex, and compatible Agent Skills hosts a small, governed slice of Chromium: open a public page, inspect it, take a screenshot, check a deployment. The browser gets a fresh profile; the agent gets an allowlisted command surface; your everyday Chrome stays out of it.
 
 Playwright is excellent. It is also a full workshop: contexts, scripts, headers, uploads, CDP, and enough knobs to build a serious test suite. That is the right tool when you own the automation. An agent asked to check whether staging loads does not need the workshop. It needs a visitor badge and a camera.
 
@@ -14,7 +14,7 @@ This package keeps the useful path narrow:
 
 - an isolated, fresh Chromium profile
 - navigation, snapshots, accessibility inspection, screenshots, PDFs, and responsive checks
-- Pi and Hermes adapters that require approval before an interaction can change something
+- adapters for Hermes, Pi, Claude Code, Codex, and compatible Agent Skills hosts that require approval before an interaction can change something
 - a pinned source dependency, native build, checksum manifest, and smoke test
 - Chromium sandboxing by default
 
@@ -56,7 +56,7 @@ agent-headless-browser screenshot /tmp/staging-home.png
 agent-headless-browser stop
 ```
 
-The snapshot exposes visible elements with references such as `@e4`. In Pi or Hermes, an interaction such as a click or text entry needs the human's explicit approval for that exact target and outcome.
+The snapshot exposes visible elements with references such as `@e4`. In any installed adapter, an interaction such as a click or text entry needs the human's explicit approval for that exact target and outcome.
 
 A few ordinary jobs it handles well:
 
@@ -68,7 +68,7 @@ A few ordinary jobs it handles well:
 
 The release source installer builds the matching runtime for Linux x64 or macOS Apple Silicon, writes to user-owned paths, and can run a smoke test against `example.com`.
 
-Follow the [installation guide](docs/INSTALL.md). It covers release setup, checksum verification, prerequisites, Pi/Hermes adapters, removal, and the Linux sandbox fallback. Do not use `--allow-no-sandbox` unless the host sandbox has failed and you have deliberately approved that weaker isolation.
+Follow the [installation guide](docs/INSTALL.md). It covers release setup, checksum verification, prerequisites, Hermes/Pi/Claude Code/Codex/generic-agent adapters, removal, and the Linux sandbox fallback. Do not use `--allow-no-sandbox` unless the host sandbox has failed and you have deliberately approved that weaker isolation.
 
 For the policy behind the wrapper, read [security boundaries](docs/SECURITY.md). Contributors and agents should also read [AGENTS.md](AGENTS.md) before installing or operating the runtime.
 

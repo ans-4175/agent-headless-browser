@@ -4,7 +4,8 @@ PKG="$(cd "$(dirname "$0")" && pwd -P)"
 VERSION=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["version"])' "$PKG/PACKAGE_MANIFEST.json" 2>/dev/null || echo 0.1.0) GSTACK_COMMIT=9fd03fae9e74f5daa7a138366aca8f86c7367c5c BUN_VERSION=1.2.10
 ROOT="$HOME/.local/share/agent-headless-browser" STATE="$HOME/.agent-headless-browser" BIN="$HOME/.local/bin" ADAPTER=none NO_SANDBOX=0 SMOKE=0
 while (($#)); do case "$1" in
-  --adapter) ADAPTER="$2"; shift 2;; --install-root) ROOT="$2"; shift 2;; --state-root) STATE="$2"; shift 2;; --bin-dir) BIN="$2"; shift 2;; --allow-no-sandbox) NO_SANDBOX=1; shift;; --smoke-test) SMOKE=1; shift;; --help) echo 'Usage: ./install.sh [--adapter hermes|pi|none] [--allow-no-sandbox] [--smoke-test]'; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac; done
+  --adapter) ADAPTER="$2"; shift 2;; --install-root) ROOT="$2"; shift 2;; --state-root) STATE="$2"; shift 2;; --bin-dir) BIN="$2"; shift 2;; --allow-no-sandbox) NO_SANDBOX=1; shift;; --smoke-test) SMOKE=1; shift;; --help) echo 'Usage: ./install.sh [--adapter hermes|pi|claude|codex|other|none] [--allow-no-sandbox] [--smoke-test]'; exit 0;; *) echo "Unknown option: $1" >&2; exit 2;; esac; done
+case "$ADAPTER" in hermes|pi|claude|codex|other|none) ;; *) echo 'adapter must be hermes, pi, claude, codex, other, or none' >&2; exit 2;; esac
 case "$(uname -s):$(uname -m)" in Linux:x86_64) bun_asset=bun-linux-x64.zip;; Darwin:arm64) bun_asset=bun-darwin-aarch64.zip;; *) echo "Unsupported platform: $(uname -s) $(uname -m); supported: Linux x64 and macOS Apple Silicon." >&2; exit 2;; esac
 for c in curl tar python3 node; do command -v "$c" >/dev/null || { echo "Missing dependency: $c" >&2; exit 2; }; done
 if command -v sha256sum >/dev/null; then
@@ -61,6 +62,32 @@ EOF
 chmod 755 "$BIN/agent-headless-browser"; ((NO_SANDBOX)) && touch "$ROOT/NO_SANDBOX_APPROVED"
 printf 'package_version=%s\ngstack_commit=%s\nbun=%s\nplaywright=1.61.1\n' "$VERSION" "$GSTACK_COMMIT" "$BUN_VERSION" > "$ROOT/VERSION"
 (cd "$ROOT" && find . -type f -not -name SHA256SUMS -print0 | sort -z | sha256_manifest > SHA256SUMS)
-case "$ADAPTER" in hermes) install -d "$HOME/.hermes/skills/agent-headless-browser"; sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/hermes/SKILL.md" > "$HOME/.hermes/skills/agent-headless-browser/SKILL.md";; pi) install -d "$HOME/.agents/skills/agent-headless-browser"; sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/pi/SKILL.md" > "$HOME/.agents/skills/agent-headless-browser/SKILL.md";; none) ;; *) echo 'adapter must be hermes, pi, or none' >&2; exit 2;; esac
+case "$ADAPTER" in
+  hermes)
+    install -d "$HOME/.hermes/skills/agent-headless-browser"
+    sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/hermes/SKILL.md" > "$HOME/.hermes/skills/agent-headless-browser/SKILL.md"
+    ;;
+  pi)
+    install -d "$HOME/.agents/skills/agent-headless-browser"
+    sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/pi/SKILL.md" > "$HOME/.agents/skills/agent-headless-browser/SKILL.md"
+    ;;
+  claude)
+    install -d "$HOME/.claude/skills/agent-headless-browser"
+    sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/claude/SKILL.md" > "$HOME/.claude/skills/agent-headless-browser/SKILL.md"
+    ;;
+  codex)
+    install -d "$HOME/.agents/skills/agent-headless-browser-codex"
+    sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/codex/SKILL.md" > "$HOME/.agents/skills/agent-headless-browser-codex/SKILL.md"
+    ;;
+  other)
+    install -d "$HOME/.agents/skills/agent-headless-browser"
+    sed "s|@BIN@|$BIN/agent-headless-browser|g" "$PKG/adapters/other/SKILL.md" > "$HOME/.agents/skills/agent-headless-browser/SKILL.md"
+    ;;
+  none) ;;
+  *)
+    echo 'adapter must be hermes, pi, claude, codex, other, or none' >&2
+    exit 2
+    ;;
+esac
 if ((SMOKE)); then "$BIN/agent-headless-browser" goto https://example.com >/dev/null; "$BIN/agent-headless-browser" snapshot -i >/dev/null; "$BIN/agent-headless-browser" stop; fi
 echo "Installed: $BIN/agent-headless-browser"
