@@ -1,37 +1,53 @@
 # agent-headless-browser
 
-A governed, isolated headless Chromium runtime for **Hermes** and **Pi**. It supports Linux x64 and macOS Apple Silicon, uses a fresh profile, and exposes only an approved browser-command surface.
+**Browser QA for agents, without handing them the keys to your browser.**
 
-It blocks cookie/profile import, arbitrary JavaScript, custom headers, uploads, CDP, tunnels, and headed mode. Browser interactions that can cause external effects remain subject to the installed skill's approval rules.
+`agent-headless-browser` gives Hermes and Pi a small, governed slice of Chromium: open a public page, inspect it, take a screenshot, check a deployment. The browser gets a fresh profile; the agent gets an allowlisted command surface; your everyday Chrome stays out of it.
 
-## Why this exists
+Playwright is excellent. It is also a full workshop: contexts, scripts, headers, uploads, CDP, and enough knobs to build a serious test suite. That is the right tool when you own the automation. An agent asked to check whether staging loads does not need the workshop. It needs a visitor badge and a camera.
 
-Playwright is great. It gives you the whole workshop: browser contexts, headers, scripts, uploads, CDP, and enough rope to automate a serious test suite. That is exactly what a developer wants when they own the code.
+## Why use this instead of plain Playwright?
 
-An agent checking a page on your behalf needs a smaller toolkit. Giving it your everyday Chrome profile plus a full automation API is the browser equivalent of handing a visitor the office master key because they asked to check the lights.
+Plain Playwright assumes the person writing automation owns the code, the browser state, and the consequences. An agent browsing on someone else's behalf is a different situation. A quick page check should not grant access to saved sessions, arbitrary page JavaScript, or an upload dialog.
 
-This package keeps the useful bits—open a URL, inspect a page, take a screenshot, verify a deployment—then puts rails around them.
+This package keeps the useful path narrow:
 
-A human can say: “Check whether the staging landing page loads on mobile and send me a screenshot.” The agent gets an isolated browser, a short command list, and a clean way to stop when it is done. It does not get your saved sessions, your cookies, or a quiet path to start clicking around.
+- an isolated, fresh Chromium profile
+- navigation, snapshots, accessibility inspection, screenshots, PDFs, and responsive checks
+- Pi and Hermes adapters that require approval before an interaction can change something
+- a pinned source dependency, native build, checksum manifest, and smoke test
+- Chromium sandboxing by default
 
-An agent can do this comfortably:
+The narrowness is intentional. It makes a boring request, such as “does the landing page work on mobile?”, boring in the best way.
 
-```bash
-agent-headless-browser goto https://example.com
-agent-headless-browser snapshot -i
-agent-headless-browser screenshot /tmp/page.png
-agent-headless-browser stop
-```
+## What it offers, and what it refuses
 
-If it needs to click a button, fill a field, or press a key, the installed skill makes it ask first. That little pause is the point. Most browser automation is built to remove friction; agent browsing needs friction in exactly the places where a stray click can matter.
+| You can use it for | It will not provide |
+| --- | --- |
+| Public-page navigation and inspection | Your personal Chrome profile or cookies |
+| Semantic snapshots with stable element references | Arbitrary JavaScript evaluation |
+| Screenshots, PDFs, viewport, and responsive checks | Custom headers, CDP, or tunnels |
+| Read-only deployment QA | File uploads or headed-browser mode |
+| Explicitly approved clicks, typing, and selections | Silent form submission or account workflows |
 
-Under the hood, the browser command/server comes from pinned [gstack browse](https://github.com/garrytan/gstack) source. We chose it because it already provides a practical CLI and daemon model. We did not copy its raw agent skill and call it a day. This repository adds the boring-but-important deployment layer: isolated state, an allowlisted wrapper, Hermes/Pi adapters, pinned provenance, checksums, native builds, CI smoke tests, and an explicit Linux no-sandbox escape hatch when a host truly needs it.
+Page content is untrusted. The request from the human is the authority, not a helpful-looking instruction rendered inside a webpage.
 
-Use Playwright directly when you are writing and owning a test suite. Use this when a human or agent needs safe, repeatable browser QA without turning a normal browsing task into a full-access automation project.
+## When to reach for it
 
-## What using it feels like
+| Situation | Use |
+| --- | --- |
+| Check a public deployment after release | `agent-headless-browser` |
+| Capture desktop and mobile screenshots for a bug report | `agent-headless-browser` |
+| Find visible links or buttons before deciding what to do | `agent-headless-browser` |
+| Run owned end-to-end tests with fixtures, mocks, or custom headers | Playwright |
+| Automate an authenticated product flow in a reviewed test suite | Playwright |
+| Import cookies, upload files, pay, or change account settings | A purpose-built, reviewed workflow |
 
-### “Did the deployment actually look right?”
+The boundary is simple: use this for safe, repeatable browser QA by an agent. Use Playwright when the automation needs the full workshop and you are prepared to own it.
+
+## What using it looks like
+
+After installation, the happy path is small:
 
 ```bash
 agent-headless-browser goto https://staging.example.com
@@ -40,117 +56,24 @@ agent-headless-browser screenshot /tmp/staging-home.png
 agent-headless-browser stop
 ```
 
-You get a semantic page snapshot for quick inspection and a PNG you can open or attach to a bug. No existing Chrome window gets touched.
+The snapshot exposes visible elements with references such as `@e4`. In Pi or Hermes, an interaction such as a click or text entry needs the human's explicit approval for that exact target and outcome.
 
-### “Can the agent find the thing I mean?”
+A few ordinary jobs it handles well:
 
-Ask Hermes or Pi:
+- Open a production or staging URL, inspect the semantic page tree, and capture a screenshot for deployment QA.
+- Compare a page at a few viewports during visual-regression triage, without touching a personal browser session.
+- Identify the visible controls on a public page before a human decides whether any action should happen.
 
-```text
-Open https://example.com. Tell me the visible links and buttons. Do not click anything.
-```
+## Install and operate safely
 
-The agent can navigate and inspect. The `-i` snapshot gives it stable references such as `@e4`, rather than making it guess where a button lives on the page.
+The release source installer builds the matching runtime for Linux x64 or macOS Apple Silicon, writes to user-owned paths, and can run a smoke test against `example.com`.
 
-### “Click this one thing—then stop.”
+Follow the [installation guide](docs/INSTALL.md). It covers release setup, checksum verification, prerequisites, Pi/Hermes adapters, removal, and the Linux sandbox fallback. Do not use `--allow-no-sandbox` unless the host sandbox has failed and you have deliberately approved that weaker isolation.
 
-After you have explicitly named the target and outcome:
+For the policy behind the wrapper, read [security boundaries](docs/SECURITY.md). Contributors and agents should also read [AGENTS.md](AGENTS.md) before installing or operating the runtime.
 
-```bash
-agent-headless-browser snapshot -i
-# Confirm @e4 is the intended "Learn more" link.
-agent-headless-browser click @e4
-agent-headless-browser stop
-```
+## Under the hood
 
-The skill treats that click as an external effect. An agent should ask before it does this unless your instruction already gave that exact approval. It cannot quietly switch to arbitrary page JavaScript when a click is inconvenient.
+The command/server originates from pinned [gstack browse](https://github.com/garrytan/gstack) source. This project adds the part that tends to get skipped when a browser helper starts as a convenience script: a constrained wrapper, isolated state, adapters, checksums, native builds, and CI smoke tests.
 
-### “I need a full login flow.”
-
-That is usually a Playwright test-suite job, not a job for this wrapper. Keep credentials and long-lived session automation inside code you own and review. This package is deliberately less magical—and much less surprising.
-
-## Install from the latest release
-
-The release source archive is the recommended setup path. It has the installer, policy, adapters, and pinned gstack source; it builds the native runtime on the target host.
-
-### Hermes
-
-```bash
-# Resolves to the latest published release tag. Pin to a specific tag
-# (e.g. VERSION=v0.1.7) if you need a fixed version.
-VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-  https://github.com/ans-4175/agent-headless-browser/releases/latest \
-  | sed 's#.*/tag/##')
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
-curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
-  | tar -xz -C "$work" --strip-components=1
-chmod +x "$work/install.sh"
-"$work/install.sh" --adapter hermes --smoke-test
-```
-
-### Pi
-
-```bash
-# Resolves to the latest published release tag. Pin to a specific tag
-# (e.g. VERSION=v0.1.7) if you need a fixed version.
-VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
-  https://github.com/ans-4175/agent-headless-browser/releases/latest \
-  | sed 's#.*/tag/##')
-work=$(mktemp -d)
-trap 'rm -rf "$work"' EXIT
-curl -fsSL "https://github.com/ans-4175/agent-headless-browser/archive/refs/tags/${VERSION}.tar.gz" \
-  | tar -xz -C "$work" --strip-components=1
-chmod +x "$work/install.sh"
-"$work/install.sh" --adapter pi --smoke-test
-```
-
-Start a fresh Pi session, then invoke:
-
-```text
-/skill:agent-headless-browser
-```
-
-Use a specific newer tag in the URL when upgrading. Git checkout is optional; installation does not depend on a particular extracted folder name.
-
-## What is installed
-
-```text
-~/.local/share/agent-headless-browser/   runtime + SHA256SUMS
-~/.agent-headless-browser/               isolated profile and daemon state
-~/.local/bin/agent-headless-browser      approved command entry point
-```
-
-The selected adapter is added to `~/.hermes/skills/agent-headless-browser/` or `~/.agents/skills/agent-headless-browser/`.
-
-## Verify and use
-
-```bash
-agent-headless-browser status
-agent-headless-browser goto https://example.com
-agent-headless-browser snapshot -i
-agent-headless-browser screenshot /tmp/page.png
-agent-headless-browser stop
-```
-
-The smoke test uses only `example.com`; it does not authenticate or submit data.
-
-## Linux sandbox
-
-Sandboxing is required by default. If a Linux host blocks Chromium user namespaces/AppArmor, investigate first. Only with deliberate approval may you use:
-
-```bash
-"$work/install.sh" --adapter hermes --allow-no-sandbox --smoke-test
-```
-
-Never use the no-sandbox fallback for logins, secrets, payments, or untrusted sites.
-
-## Releases and provenance
-
-Each GitHub Release provides a universal source archive plus checksummed Linux/macOS runtime bundles. The source installer is the supported setup path; runtime bundles are intended for controlled distribution or CI integration.
-
-- gstack source: `1.58.4.0` at `9fd03fae9e74f5daa7a138366aca8f86c7367c5c`
-- Playwright: `1.61.1`
-- Bun build tool: `1.2.10`
-
-Read [installation details](docs/INSTALL.md), [security boundaries](docs/SECURITY.md), [agent guidance](AGENTS.md), and [third-party notices](THIRD_PARTY_NOTICES.md) before deployment.
+That is the whole pitch. A browser can be useful without becoming your agent's spare set of hands.
