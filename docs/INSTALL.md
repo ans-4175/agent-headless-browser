@@ -6,7 +6,7 @@ Pick a release tag and adapter without relying on an extracted directory name:
 
 ```bash
 # Resolves to the latest published release tag. Pin to a specific tag
-# (e.g. VERSION=v0.1.9) if you need a fixed version.
+# (e.g. VERSION=v0.2.0) if you need a fixed version.
 VERSION=$(curl -fsSL -o /dev/null -w '%{url_effective}' \
   https://github.com/ans-4175/agent-headless-browser/releases/latest \
   | sed 's#.*/tag/##')
