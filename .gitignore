@@ -1,0 +1,4 @@
+# Local QA credentials
+.env.test
+.env.test.*
+!.env.test.example

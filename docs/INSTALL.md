@@ -105,7 +105,7 @@ agent-headless-browser screenshot /tmp/page.png
 agent-headless-browser stop
 ```
 
-`click`, `fill`, `select`, `type`, and `press` require an explicit approval workflow in every installed adapter. With `--adapter none`, the operator must provide and enforce that policy. An explicitly approved interactive login is allowed only for a dedicated QA/test account: state the target site, account purpose, and intended QA outcome before entering credentials. A site may then set its ordinary session cookies in the isolated persistent profile for later QA. The wrapper still blocks cookie/storage reading, cookie import/export, personal-profile use, arbitrary JavaScript, uploads, CDP, tunnels, and headed-browser mode.
+`click`, `fill`, `select`, `type`, and `press` require an explicit approval workflow in every installed adapter. With `--adapter none`, the operator must provide and enforce that policy. An explicitly approved interactive login is allowed only for a dedicated QA/test account: state the target site, account purpose, and intended QA outcome before entering credentials. Store its credentials in a local, gitignored `.env.test` file using `QA_LOGIN_EMAIL` and `QA_LOGIN_PASSWORD`; start from [`.env.test.example`](../.env.test.example), set permissions to `600`, and never commit, print, or paste its values into chat, logs, or screenshots. A site may then set its ordinary session cookies in the isolated persistent profile for later QA. The wrapper still blocks cookie/storage reading, cookie import/export, personal-profile use, arbitrary JavaScript, uploads, CDP, tunnels, and headed-browser mode.
 
 ## Linux sandbox
 
