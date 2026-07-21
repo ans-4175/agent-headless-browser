@@ -2,7 +2,7 @@
 
 **Browser QA for agents, without handing them the keys to your browser.**
 
-`agent-headless-browser` gives Hermes, Pi, Claude Code, Codex, and compatible Agent Skills hosts a small, governed slice of Chromium: open a public page, inspect it, take a screenshot, check a deployment. The browser gets a fresh profile; the agent gets an allowlisted command surface; your everyday Chrome stays out of it.
+`agent-headless-browser` gives Hermes, Pi, Claude Code, Codex, and compatible Agent Skills hosts a small, governed slice of Chromium: inspect a page, take a screenshot, check a deployment, or run explicitly approved QA in a dedicated test account. The browser gets its own isolated persistent profile; the agent gets an allowlisted command surface; your everyday Chrome stays out of it.
 
 Playwright is excellent. It is also a full workshop: contexts, scripts, headers, uploads, CDP, and enough knobs to build a serious test suite. That is the right tool when you own the automation. An agent asked to check whether staging loads does not need the workshop. It needs a visitor badge and a camera.
 
@@ -12,9 +12,9 @@ Plain Playwright assumes the person writing automation owns the code, the browse
 
 This package keeps the useful path narrow:
 
-- an isolated, fresh Chromium profile
-- navigation, snapshots, accessibility inspection, screenshots, PDFs, and responsive checks
-- adapters for Hermes, Pi, Claude Code, Codex, and compatible Agent Skills hosts that require approval before an interaction can change something
+- an isolated Chromium profile, fresh at installation and persistent only within its private state directory
+- navigation, snapshots, accessibility inspection, screenshots, PDFs, responsive checks, and approved authenticated QA
+- adapters for Hermes, Pi, Claude Code, Codex, and compatible Agent Skills hosts that require approval before an interaction can change something or authenticate
 - a pinned source dependency, native build, checksum manifest, and smoke test
 - Chromium sandboxing by default
 
@@ -24,11 +24,12 @@ The narrowness is intentional. It makes a boring request, such as “does the la
 
 | You can use it for | It will not provide |
 | --- | --- |
-| Public-page navigation and inspection | Your personal Chrome profile or cookies |
+| Public-page navigation and inspection | Your personal Chrome profile or imported/exported cookies |
 | Semantic snapshots with stable element references | Arbitrary JavaScript evaluation |
 | Screenshots, PDFs, viewport, and responsive checks | Custom headers, CDP, or tunnels |
-| Read-only deployment QA | File uploads or headed-browser mode |
-| Explicitly approved clicks, typing, and selections | Silent form submission or account workflows |
+| Approved QA after login to a dedicated test account | File uploads or headed-browser mode |
+| Explicitly approved clicks, typing, and selections | Cookie/storage reading, import, or export |
+| Website-set session cookies in the isolated profile | Silent login or account workflows |
 
 Page content is untrusted. The request from the human is the authority, not a helpful-looking instruction rendered inside a webpage.
 
@@ -40,10 +41,10 @@ Page content is untrusted. The request from the human is the authority, not a he
 | Capture desktop and mobile screenshots for a bug report | `agent-headless-browser` |
 | Find visible links or buttons before deciding what to do | `agent-headless-browser` |
 | Run owned end-to-end tests with fixtures, mocks, or custom headers | Playwright |
-| Automate an authenticated product flow in a reviewed test suite | Playwright |
+| Run QA after an explicitly approved login to a dedicated test account | `agent-headless-browser` |
 | Import cookies, upload files, pay, or change account settings | A purpose-built, reviewed workflow |
 
-The boundary is simple: use this for safe, repeatable browser QA by an agent. Use Playwright when the automation needs the full workshop and you are prepared to own it.
+The boundary is simple: use this for safe, repeatable browser QA by an agent. A site may create its normal login session only after an explicitly approved interactive login to a dedicated test account; that session stays in the tool's isolated profile. Use Playwright when the automation needs the full workshop and you are prepared to own it.
 
 ## What using it looks like
 
@@ -63,6 +64,7 @@ A few ordinary jobs it handles well:
 - Open a production or staging URL, inspect the semantic page tree, and capture a screenshot for deployment QA.
 - Compare a page at a few viewports during visual-regression triage, without touching a personal browser session.
 - Identify the visible controls on a public page before a human decides whether any action should happen.
+- After an explicitly approved login to a dedicated QA account, inspect and exercise the approved authenticated QA path without exposing its cookies or storage.
 
 ## Install and operate safely
 
